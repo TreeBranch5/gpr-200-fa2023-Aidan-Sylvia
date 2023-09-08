@@ -8,13 +8,12 @@
 const int SCREEN_WIDTH = 1080;
 const int SCREEN_HEIGHT = 720;
 
-int main() {
-	float vertices[9] = {
-		//x   //y   //z
-		-0.5, -0.5, 0.0,//Bottom left
-		 0.5, -0.5, 0.0,//Bottem right
-		 0.0,  0.5, 0.0 //Top center
-	};
+float vertices[9] = {
+	//x   //y   //z
+	-0.5, -0.5, 0.0,//Bottom left
+	 0.5, -0.5, 0.0,//Bottem right
+	 0.0,  0.5, 0.0 //Top center
+};
 
 const char* vertexShaderSource = R"(
 	#version 450
@@ -31,6 +30,11 @@ const char* fragmentShaderSource = R"(
 	FragColor = vec4(1.0);
 	}
 )";
+
+int main() {
+
+	//unsigned int shader = createShaderProgram(vertexShaderSource, fragmentShaderSource);
+	//unsigned int vao = createVAO(vertices, 3);
 
 
 	printf("Initializing...");
@@ -94,7 +98,12 @@ const char* fragmentShaderSource = R"(
 		glfwPollEvents();
 		glClearColor(0.3f, 0.4f, 0.9f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
+		//glUseProgram(shader);
+		glBindVertexArray(vao);
+		glDrawArrays(GL_TRIANGLES, 0, 3);
+
 		glfwSwapBuffers(window);
 	}
+
 	printf("Shutting down...");
 }
