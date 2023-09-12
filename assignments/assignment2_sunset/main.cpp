@@ -8,6 +8,9 @@
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 
+#include <as/shader.h>
+
+
 unsigned int createShader(GLenum shaderType, const char* sourceCode);
 unsigned int createShaderProgram(const char* vertexShaderSource, const char* fragmentShaderSource);
 unsigned int createVAO(float* vertexData, int numVertices);
@@ -46,6 +49,9 @@ float triangleBrightness = 1.0f;
 bool showImGUIDemoWindow = true;
 
 int main() {
+
+	
+
 	printf("Initializing...");
 	if (!glfwInit()) {
 		printf("GLFW failed to init!");
@@ -73,6 +79,8 @@ int main() {
 
 	unsigned int shader = createShaderProgram(vertexShaderSource, fragmentShaderSource);
 	unsigned int vao = createVAO(vertices, 3);
+
+	
 
 	glUseProgram(shader);
 	glBindVertexArray(vao);

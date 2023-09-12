@@ -8,7 +8,7 @@
 const int SCREEN_WIDTH = 1080;
 const int SCREEN_HEIGHT = 720;
 
-float vertices[21] = {
+float vertices[21] = { //Triangle Data
 	//x   //y  //z   //r  //g  //b  //a
 	-0.5, -0.5, 0.0, 1.0, 0.0, 0.0, 1.0, //Bottom left
 	 0.5, -0.5, 0.0, 0.0, 1.0, 0.0, 1.0, //Bottom right
