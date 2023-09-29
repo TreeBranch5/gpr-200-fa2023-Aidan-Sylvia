@@ -52,6 +52,8 @@ namespace as {
 	//Shader class
 	Shader::Shader(const std::string& vertexShader, const std::string& fragmentShader)
 	{
+		
+
 		std::string vertexShaderSource = loadShaderSourceFromFile(vertexShader.c_str());
 		std::string fragmentShaderSource = loadShaderSourceFromFile(fragmentShader.c_str());
 		m_id = createShaderProgram(vertexShaderSource.c_str(), fragmentShaderSource.c_str());
@@ -59,6 +61,8 @@ namespace as {
 	void Shader::use()
 	{
 		glUseProgram(m_id);
+
+
 	}
 	void Shader::setInt(const std::string& name, int v) const
 	{
@@ -80,4 +84,5 @@ namespace as {
 	{
 		glUniform4f(glGetUniformLocation(m_id, name.c_str()), x, y, z, w);
 	}
+	
 }
