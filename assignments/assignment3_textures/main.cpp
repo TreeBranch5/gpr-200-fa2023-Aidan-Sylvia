@@ -10,6 +10,8 @@
 
 #include <ew/shader.h>
 
+#include "as/texture.h"
+
 struct Vertex {
 	float x, y, z;
 	float u, v;
@@ -58,21 +60,58 @@ int main() {
 	ImGui_ImplGlfw_InitForOpenGL(window, true);
 	ImGui_ImplOpenGL3_Init();
 
-	ew::Shader shader("assets/vertexShader.vert", "assets/fragmentShader.frag");
+	ew::Shader backgroundShader("assets/background.vert", "assets/background.frag");
+	ew::Shader characterShader("assets/character.vert", "assets/character.frag");
+
 
 	unsigned int quadVAO = createVAO(vertices, 4, indices, 6);
 
-	glBindVertexArray(quadVAO);
+	glBindVertexArray(quadVAO); 
+
+	unsigned int textureA = loadTexture("assets/StoneWall.png", GL_REPEAT, GL_LINEAR);
+	unsigned int textureB = loadTexture("assets/Noise.png", GL_REPEAT, GL_LINEAR);
+	unsigned int textureC = loadTexture("assets/character.png", GL_REPEAT, GL_LINEAR);
+
+	//Place textureA in unit 0
+	glActiveTexture(GL_TEXTURE0); 
+	glBindTexture(GL_TEXTURE_2D, textureA); 
+	//Place textureB in unit 1
+	glActiveTexture(GL_TEXTURE1); 
+	glBindTexture(GL_TEXTURE_2D, textureB); 
+	//Place textureC in unit 2
+	glActiveTexture(GL_TEXTURE2); 
+	glBindTexture(GL_TEXTURE_2D, textureC); 
+
+	// Set uniforms
+	backgroundShader.use();
+	characterShader.use(); 
+	
+
 
 	while (!glfwWindowShouldClose(window)) {
 		glfwPollEvents();
 		glClearColor(0.3f, 0.4f, 0.9f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		//Set uniforms
-		shader.use();
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); 
 
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, NULL);
+		//Set uniforms
+		backgroundShader.use();
+		backgroundShader.setInt("_Texture", 0);      // Bind to texture unit 0
+		backgroundShader.setInt("_NoiseTexture", 1); // Bind to texture unit 1
+		backgroundShader.setFloat("_Time", glfwGetTime());
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, NULL); 
+
+
+		characterShader.use();
+		characterShader.setInt("_Texture", 2); // Bind to texture unit 2
+		characterShader.setFloat("_Time", glfwGetTime());
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, NULL); 
+
+
+	
+
 
 		//Render UI
 		{
