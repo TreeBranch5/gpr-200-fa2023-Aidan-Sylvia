@@ -11,12 +11,16 @@
 #include <ew/shader.h>
 #include <ew/ewMath/vec3.h>
 #include <ew/procGen.h>
+#include <ew/mesh.h>
+#include <as/transformations.h>
+
 
 void framebufferSizeCallback(GLFWwindow* window, int width, int height);
 
 //Square aspect ratio for now. We will account for this with projection later.
 const int SCREEN_WIDTH = 720;
 const int SCREEN_HEIGHT = 720;
+const int NUM_CUBES = 4;
 
 int main() {
 	printf("Initializing...");
@@ -52,9 +56,19 @@ int main() {
 	glEnable(GL_DEPTH_TEST);
 
 	ew::Shader shader("assets/vertexShader.vert", "assets/fragmentShader.frag");
+	as::Transform transform; 
 	
 	//Cube mesh
 	ew::Mesh cubeMesh(ew::createCube(0.5f));
+
+
+	std::vector<as::Transform> transforms(NUM_CUBES);
+
+	transforms[0].position = ew::Vec3(-0.5f, -0.5f, 0.0f);
+	transforms[1].position = ew::Vec3(0.5f, -0.5f, 0.0f);
+	transforms[2].position = ew::Vec3(-0.5f, 0.5f, 0.0f);
+	transforms[3].position = ew::Vec3(0.5f, 0.5f, 0.0f);
+
 	
 	while (!glfwWindowShouldClose(window)) {
 		glfwPollEvents();
@@ -62,12 +76,10 @@ int main() {
 		//Clear both color buffer AND depth buffer
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		//Set uniforms
-		shader.use();
+		
 
-		//TODO: Set model matrix uniform
+		
 
-		cubeMesh.draw();
 
 		//Render UI
 		{
@@ -76,8 +88,27 @@ int main() {
 			ImGui::NewFrame();
 
 			ImGui::Begin("Transform");
-			ImGui::End();
+			
+			for (int i = 0; i < NUM_CUBES; i++) {
+				   
+				//Set uniforms
+				shader.use();
+				shader.setMat4("_Model", transforms[i].getModelMatrix());
+				cubeMesh.draw();
 
+				ImGui::PushID(i);  // Push a unique ID for this cube's controls
+
+				ImGui::Text("Cube %d", i);
+				ImGui::DragFloat3("Position", &transforms[i].position.x, 0.05f);
+				ImGui::DragFloat3("Rotation", &transforms[i].rotation.x, 1.0f);
+				ImGui::DragFloat3("Scale", &transforms[i].scale.x, 0.05f);
+				ImGui::Separator();
+
+				ImGui::PopID();  // Pop the ID to end the scope for this cube's controls
+			}
+				
+			
+			ImGui::End(); 
 			ImGui::Render();
 			ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 		}
