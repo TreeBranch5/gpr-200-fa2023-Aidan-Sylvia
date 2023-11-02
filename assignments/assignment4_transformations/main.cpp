@@ -13,113 +13,111 @@
 #include <ew/procGen.h>
 #include <ew/mesh.h>
 #include <as/transformations.h>
+#include "as/camera.h"
 
 
 void framebufferSizeCallback(GLFWwindow* window, int width, int height);
 
-//Square aspect ratio for now. We will account for this with projection later.
 const int SCREEN_WIDTH = 720;
 const int SCREEN_HEIGHT = 720;
 const int NUM_CUBES = 4;
 
+as::Camera camera;
+
 int main() {
-	printf("Initializing...");
-	if (!glfwInit()) {
-		printf("GLFW failed to init!");
-		return 1;
-	}
+    printf("Initializing...");
+    if (!glfwInit()) {
+        printf("GLFW failed to init!");
+        return 1;
+    }
 
-	GLFWwindow* window = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Textures", NULL, NULL);
-	if (window == NULL) {
-		printf("GLFW failed to create window");
-		return 1;
-	}
-	glfwMakeContextCurrent(window);
-	glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
+    GLFWwindow* window = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Textures", NULL, NULL);
+    if (window == NULL) {
+        printf("GLFW failed to create window");
+        return 1;
+    }
+    glfwMakeContextCurrent(window);
+    glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
 
-	if (!gladLoadGL(glfwGetProcAddress)) {
-		printf("GLAD Failed to load GL headers");
-		return 1;
-	}
+    if (!gladLoadGL(glfwGetProcAddress)) {
+        printf("GLAD Failed to load GL headers");
+        return 1;
+    }
 
-	//Initialize ImGUI
-	IMGUI_CHECKVERSION();
-	ImGui::CreateContext();
-	ImGui_ImplGlfw_InitForOpenGL(window, true);
-	ImGui_ImplOpenGL3_Init();
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init();
 
-	//Enable back face culling
-	glEnable(GL_CULL_FACE);
-	glCullFace(GL_BACK);
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+    glEnable(GL_DEPTH_TEST);
 
-	//Depth testing - required for depth sorting!
-	glEnable(GL_DEPTH_TEST);
+    ew::Shader shader("assets/vertexShader.vert", "assets/fragmentShader.frag");
+    as::Transform transform;
 
-	ew::Shader shader("assets/vertexShader.vert", "assets/fragmentShader.frag");
-	as::Transform transform; 
-	
-	//Cube mesh
-	ew::Mesh cubeMesh(ew::createCube(0.5f));
+    ew::Mesh cubeMesh(ew::createCube(0.5f));
 
+    std::vector<as::Transform> transforms(NUM_CUBES);
 
-	std::vector<as::Transform> transforms(NUM_CUBES);
+    transforms[0].position = ew::Vec3(-0.5f, -0.5f, 0.0f);
+    transforms[1].position = ew::Vec3(0.5f, -0.5f, 0.0f);
+    transforms[2].position = ew::Vec3(-0.5f, 0.5f, 0.0f);
+    transforms[3].position = ew::Vec3(0.5f, 0.5f, 0.0f);
 
-	transforms[0].position = ew::Vec3(-0.5f, -0.5f, 0.0f);
-	transforms[1].position = ew::Vec3(0.5f, -0.5f, 0.0f);
-	transforms[2].position = ew::Vec3(-0.5f, 0.5f, 0.0f);
-	transforms[3].position = ew::Vec3(0.5f, 0.5f, 0.0f);
+    // Initialize Camera
+    camera.position = ew::Vec3(0.0f, 0.0f, 5.0f);
+    camera.target = ew::Vec3(0.0f, 0.0f, 0.0f);
+    camera.fov = 60.0f;
+    camera.orthoHeight = 6.0f;
+    camera.nearPlane = 0.1f;
+    camera.farPlane = 100.0f;
 
-	
-	while (!glfwWindowShouldClose(window)) {
-		glfwPollEvents();
-		glClearColor(0.3f, 0.4f, 0.9f, 1.0f);
-		//Clear both color buffer AND depth buffer
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    while (!glfwWindowShouldClose(window)) {
+        glfwPollEvents();
+        glClearColor(0.3f, 0.4f, 0.9f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		
+        shader.use();
+        shader.setMat4("_View", camera.getViewMatrix());
+        shader.setMat4("_Projection", camera.getProjectionMatrix(SCREEN_WIDTH / static_cast<float>(SCREEN_HEIGHT)));
 
-		
+        ImGui_ImplGlfw_NewFrame();
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui::NewFrame();
 
+        ImGui::Begin("Transform");
 
-		//Render UI
-		{
-			ImGui_ImplGlfw_NewFrame();
-			ImGui_ImplOpenGL3_NewFrame();
-			ImGui::NewFrame();
+        for (int i = 0; i < NUM_CUBES; i++) {
+            shader.setMat4("_Model", transforms[i].getModelMatrix());
+            cubeMesh.draw();
 
-			ImGui::Begin("Transform");
-			
-			for (int i = 0; i < NUM_CUBES; i++) {
-				   
-				//Set uniforms
-				shader.use();
-				shader.setMat4("_Model", transforms[i].getModelMatrix());
-				cubeMesh.draw();
+            ImGui::PushID(i);
+            ImGui::Text("Cube %d", i);
+            ImGui::DragFloat3("Position", &transforms[i].position.x, 0.05f);
+            ImGui::DragFloat3("Rotation", &transforms[i].rotation.x, 1.0f);
+            ImGui::DragFloat3("Scale", &transforms[i].scale.x, 0.05f);
+            ImGui::Separator();
+            ImGui::PopID();
+        }
 
-				ImGui::PushID(i);  // Push a unique ID for this cube's controls
+        // Camera Controls
+        ImGui::Begin("Camera Controls");
+        ImGui::DragFloat3("Camera Position", &camera.position.x, 0.05f);
+        ImGui::DragFloat3("Camera Target", &camera.target.x, 0.05f);
+        ImGui::SliderFloat("FOV", &camera.fov, 1.0f, 180.0f);
+        ImGui::End();
 
-				ImGui::Text("Cube %d", i);
-				ImGui::DragFloat3("Position", &transforms[i].position.x, 0.05f);
-				ImGui::DragFloat3("Rotation", &transforms[i].rotation.x, 1.0f);
-				ImGui::DragFloat3("Scale", &transforms[i].scale.x, 0.05f);
-				ImGui::Separator();
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
-				ImGui::PopID();  // Pop the ID to end the scope for this cube's controls
-			}
-				
-			
-			ImGui::End(); 
-			ImGui::Render();
-			ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-		}
+        glfwSwapBuffers(window);
+    }
 
-		glfwSwapBuffers(window);
-	}
-	printf("Shutting down...");
+    printf("Shutting down...");
 }
 
-void framebufferSizeCallback(GLFWwindow* window, int width, int height)
-{
-	glViewport(0, 0, width, height);
+void framebufferSizeCallback(GLFWwindow* window, int width, int height) {
+    glViewport(0, 0, width, height);
+    camera.updateProjection(width / static_cast<float>(height));
 }
-
