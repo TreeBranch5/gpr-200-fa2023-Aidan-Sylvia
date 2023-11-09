@@ -78,12 +78,25 @@ int main() {
 	ew::Shader shader("assets/vertexShader.vert", "assets/fragmentShader.frag");
 	unsigned int brickTexture = ew::loadTexture("assets/brick_color.jpg",GL_REPEAT,GL_LINEAR);
 
-	//Create cube
+	//Create shapes (cube, sphere and a cylinder)
 	ew::MeshData cubeMeshData = ew::createCube(0.5f);
 	ew::Mesh cubeMesh(cubeMeshData);
 
+	ew::MeshData sphereMeshData = ew::createSphere(0.5f, 64);
+	ew::Mesh sphereMesh(sphereMeshData); 
+
+	ew::MeshData cylinderMeshData = ew::createCylinder(0.5f, 1.0f, 64); 
+	ew::Mesh cylinderMesh(cylinderMeshData);
+
 	//Initialize transforms
 	ew::Transform cubeTransform;
+	ew::Transform sphereTransform;
+	ew::Transform cylinderTransform;
+
+	sphereTransform.position = ew::Vec3(1.0f, 0.0f, 0.0f);
+	cylinderTransform.position = ew::Vec3(-1.f, 0.0f, 0.0f);
+
+
 
 	resetCamera(camera,cameraController);
 
@@ -106,6 +119,7 @@ int main() {
 		
 
 		shader.use();
+		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, brickTexture);
 		shader.setInt("_Texture", 0);
 		shader.setInt("_Mode", appSettings.shadingModeIndex);
@@ -117,9 +131,20 @@ int main() {
 		ew::Vec3 lightF = ew::Vec3(sinf(lightRot.y) * cosf(lightRot.x), sinf(lightRot.x), -cosf(lightRot.y) * cosf(lightRot.x));
 		shader.setVec3("_LightDir", lightF);
 
-		//Draw cube
+		//Draw shapes (cube, sphere and a cylinder)
+		//Draw Cube
 		shader.setMat4("_Model", cubeTransform.getModelMatrix());
 		cubeMesh.draw((ew::DrawMode)appSettings.drawAsPoints);
+
+		// Draw sphere
+		shader.setMat4("_Model", sphereTransform.getModelMatrix());
+		sphereMesh.draw((ew::DrawMode)appSettings.drawAsPoints);
+
+		// Draw cylinder
+		shader.setMat4("_Model", cylinderTransform.getModelMatrix());
+		cylinderMesh.draw((ew::DrawMode)appSettings.drawAsPoints);
+
+
 
 		//Render UI
 		{
