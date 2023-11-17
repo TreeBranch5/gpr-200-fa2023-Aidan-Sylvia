@@ -15,6 +15,9 @@
 #include <as/transformations.h>
 #include "as/camera.h"
 
+#include "ew/transform.h"
+#include "ew/camera.h"
+#include "ew/cameraController.h"
 
 void framebufferSizeCallback(GLFWwindow* window, int width, int height);
 
@@ -22,7 +25,7 @@ const int SCREEN_WIDTH = 720;
 const int SCREEN_HEIGHT = 720;
 const int NUM_CUBES = 4;
 
-as::Camera camera;
+ew::Camera camera;
 
 int main() {
     printf("Initializing...");
@@ -54,11 +57,11 @@ int main() {
     glEnable(GL_DEPTH_TEST);
 
     ew::Shader shader("assets/vertexShader.vert", "assets/fragmentShader.frag");
-    as::Transform transform;
+    ew::Transform transform;
 
     ew::Mesh cubeMesh(ew::createCube(0.5f));
 
-    std::vector<as::Transform> transforms(NUM_CUBES);
+    std::vector<ew::Transform> transforms(NUM_CUBES);
 
     transforms[0].position = ew::Vec3(-0.5f, -0.5f, 0.0f);
     transforms[1].position = ew::Vec3(0.5f, -0.5f, 0.0f);
